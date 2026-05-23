@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Báo Cáo SW SOC – W20 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2230;
+    --border: #21262d;
+    --accent: #1f6feb;
+    --accent2: #388bfd;
+    --green: #3fb950;
+    --red: #f85149;
+    --orange: #d29922;
+    --yellow: #e3b341;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #6e7681;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1928 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 40px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .logo-badge {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--accent), #58a6ff);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 800; color: #fff;
+    letter-spacing: -1px;
+  }
+  header h1 { font-size: 20px; font-weight: 700; color: var(--text); }
+  header p  { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .header-right {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .date-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13px; color: var(--text2);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .date-badge span { color: var(--text); font-weight: 600; }
+  .week-pill {
+    background: linear-gradient(135deg, var(--accent) 0%, #58a6ff 100%);
+    color: #fff;
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .btn-download {
+    background: var(--green);
+    color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 18px;
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: opacity .15s;
+  }
+  .btn-download:hover { opacity: .85; }
+
+  /* ── MAIN ── */
+  main { padding: 32px 40px; max-width: 1400px; margin: 0 auto; }
+
+  /* ── KPI ROW ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: 14px 14px 0 0;
+  }
+  .kpi-card.blue::before  { background: linear-gradient(90deg, var(--accent), #58a6ff); }
+  .kpi-card.green::before { background: linear-gradient(90deg, var(--green), #56d364); }
+  .kpi-card.red::before   { background: linear-gradient(90deg, var(--red), #ff7b72); }
+  .kpi-card.orange::before{ background: linear-gradient(90deg, var(--orange), var(--yellow)); }
+  .kpi-label { font-size: 12px; color: var(--text2); font-weight: 500; text-transform: uppercase; letter-spacing: .6px; }
+  .kpi-value { font-size: 38px; font-weight: 800; margin: 8px 0 4px; line-height: 1; }
+  .kpi-delta {
+    font-size: 13px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 3px;
+    border-radius: 5px; padding: 2px 8px;
+  }
+  .kpi-delta.up   { background: rgba(63,185,80,.15); color: var(--green); }
+  .kpi-delta.down { background: rgba(248,81,73,.15);  color: var(--red); }
+  .kpi-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size: 15px; font-weight: 700;
+    color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 14px;
+  }
+  .section-title .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* ── TWO COL ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+  }
+
+  /* ── TABLE ── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { border-bottom: 1px solid var(--border); }
+  thead th {
+    text-align: left;
+    padding: 8px 10px;
+    color: var(--text2);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  thead th:not(:first-child) { text-align: right; }
+  tbody td {
+    padding: 9px 10px;
+    border-bottom: 1px solid rgba(33,38,45,.7);
+    color: var(--text);
+  }
+  tbody td:not(:first-child) { text-align: right; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  .num-good { color: var(--green); font-weight: 600; }
+  .num-bad  { color: var(--red);   font-weight: 600; }
+  .num-warn { color: var(--yellow); font-weight: 600; }
+  .num-blue { color: #58a6ff; font-weight: 700; }
+
+  /* ── WEEK COMPARE ── */
+  .compare-table thead th:not(:first-child) { text-align: center; }
+  .compare-table tbody td:not(:first-child) { text-align: center; }
+  .badge-up   { background: rgba(63,185,80,.2);  color: var(--green); border-radius: 4px; padding: 1px 6px; font-size: 12px; font-weight: 700; }
+  .badge-down { background: rgba(248,81,73,.2);  color: var(--red);   border-radius: 4px; padding: 1px 6px; font-size: 12px; font-weight: 700; }
+
+  /* ── DAILY TABLE ── */
+  .daily-table thead th:not(:first-child) { text-align: center; }
+  .daily-table tbody td:not(:first-child) { text-align: center; }
+
+  /* ── BAR CHART (CSS only) ── */
+  .bar-chart { display: flex; align-items: flex-end; gap: 10px; height: 130px; margin-top: 14px; }
+  .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 4px; height: 100%; }
+  .bars { display: flex; align-items: flex-end; gap: 3px; flex: 1; width: 100%; justify-content: center; }
+  .bar {
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+    width: 22px;
+    transition: opacity .2s;
+  }
+  .bar:hover { opacity: .75; }
+  .bar-w19 { background: var(--accent); }
+  .bar-w20 { background: var(--red); }
+  .bar-label { font-size: 10px; color: var(--text3); text-align: center; }
+  .legend { display: flex; gap: 14px; margin-top: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* ── HEATMAP-LIKE DAILY ── */
+  .day-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 6px; }
+  .day-cell {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .day-cell .dc-date { font-size: 10px; color: var(--text3); margin-bottom: 4px; }
+  .day-cell .dc-day  { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 6px; }
+  .day-cell .dc-num  { font-size: 22px; font-weight: 800; }
+  .day-cell .dc-sub  { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+  /* ── PERSON TABLE ── */
+  .person-row { display: flex; align-items: center; gap: 10px; margin-bottom: 2px; }
+  .avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .av1 { background: linear-gradient(135deg,#1f6feb,#58a6ff); }
+  .av2 { background: linear-gradient(135deg,#3fb950,#56d364); }
+  .av3 { background: linear-gradient(135deg,#d29922,#e3b341); }
+  .av4 { background: linear-gradient(135deg,#f85149,#ff7b72); }
+  .av5 { background: linear-gradient(135deg,#bc8cff,#d2a8ff); }
+
+  /* ── LOST TABLE ── */
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--text3);
+    font-size: 12px;
+    border-top: 1px solid var(--border);
+    margin-top: 16px;
+  }
+
+  /* ── PRINT / DOWNLOAD ── */
+  @media print {
+    header { position: relative; }
+    .btn-download { display: none; }
+    body { background: #fff; color: #000; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-badge">SW</div>
+    <div>
+      <h1>Báo Cáo SW SOC – Backlog</h1>
+      <p>Tổng hợp vận hành · Tuần 20 · 2026</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="date-badge">📅 Hôm nay: <span>23/05/2026</span></div>
+    <div class="week-pill">Tuần 20</div>
+    <button class="btn-download" onclick="window.print()">⬇ Tải / In Báo Cáo</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── KPI ROW ── -->
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-label">Đơn đã xử lý trong tuần</div>
+      <div class="kpi-value" style="color:#58a6ff">394</div>
+      <span class="kpi-delta up">▲ +9%</span>
+      <div class="kpi-sub">W19: 363 đơn</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Đơn sai tuyến</div>
+      <div class="kpi-value" style="color:var(--red)">37</div>
+      <span class="kpi-delta down">▲ +185%</span>
+      <div class="kpi-sub">W19: 13 đơn</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Đơn Pending chưa xử lý</div>
+      <div class="kpi-value" style="color:var(--yellow)">41</div>
+      <span class="kpi-delta down">▲ +86%</span>
+      <div class="kpi-sub">W19: 22 đơn</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Đơn Follow</div>
+      <div class="kpi-value" style="color:var(--green)">125</div>
+      <span class="kpi-delta down">▲ +95%</span>
+      <div class="kpi-sub">W19: 64 đơn</div>
+    </div>
+  </div>
+
+  <!-- ── CHART + WEEK COMPARE ── -->
+  <div class="two-col">
+
+    <!-- Chart W19 vs W20 -->
+    <div class="card">
+      <div class="section-title"><div class="dot"></div>So sánh W19 vs W20</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>W19</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>W20</div>
+      </div>
+      <div class="bar-chart">
+        <div class="bar-group">
+          <div class="bars">
+            <div class="bar bar-w19" style="height:95%"  title="W19: 363"></div>
+            <div class="bar bar-w20" style="height:100%" title="W20: 394"></div>
+          </div>
+          <div class="bar-label">Đã xử lý</div>
+        </div>
+        <div class="bar-group">
+          <div class="bars">
+            <div class="bar bar-w19" style="height:3.3%" title="W19: 13"></div>
+            <div class="bar bar-w20" style="height:9.4%" title="W20: 37"></div>
+          </div>
+          <div class="bar-label">Sai tuyến</div>
+        </div>
+        <div class="bar-group">
+          <div class="bars">
+            <div class="bar bar-w19" style="height:5.6%" title="W19: 22"></div>
+            <div class="bar bar-w20" style="height:10.4%" title="W20: 41"></div>
+          </div>
+          <div class="bar-label">Pending</div>
+        </div>
+        <div class="bar-group">
+          <div class="bars">
+            <div class="bar bar-w19" style="height:16.2%" title="W19: 64"></div>
+            <div class="bar bar-w20" style="height:31.7%" title="W20: 125"></div>
+          </div>
+          <div class="bar-label">Follow</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bảng tổng W19/W20 -->
+    <div class="card">
+      <div class="section-title"><div class="dot"></div>Bảng tổng hợp W19 / W20</div>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Chỉ số</th>
+            <th>W19</th>
+            <th>W20</th>
+            <th>Tăng/Giảm</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Đơn đã xử lý</td>
+            <td>363</td>
+            <td class="num-blue">394</td>
+            <td><span class="badge-up">+9%</span></td>
+          </tr>
+          <tr>
+            <td>Đơn sai tuyến</td>
+            <td>13</td>
+            <td class="num-bad">37</td>
+            <td><span class="badge-down">+185%</span></td>
+          </tr>
+          <tr>
+            <td>Đơn Pending chưa xử lý</td>
+            <td>22</td>
+            <td class="num-warn">41</td>
+            <td><span class="badge-down">+86%</span></td>
+          </tr>
+          <tr>
+            <td>Đơn Follow</td>
+            <td>64</td>
+            <td class="num-warn">125</td>
+            <td><span class="badge-down">+95%</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── DAILY BREAKDOWN ── -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="section-title"><div class="dot"></div>Chi tiết theo ngày trong tuần (W20)</div>
+    <div class="day-grid">
+      <div>
+        <table class="daily-table" style="font-size:12px">
+          <thead>
+            <tr>
+              <th>Chỉ số</th>
+              <th>T2 18/05</th>
+              <th>T3 19/05</th>
+              <th>T4 20/05</th>
+              <th>T5 21/05</th>
+              <th>T6 22/05</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Đơn đã xử lý trong ngày</td>
+              <td>22</td><td>72</td><td>28</td><td>17</td><td>26</td>
+            </tr>
+            <tr>
+              <td>Đơn cần xử lý trong ngày</td>
+              <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td>
+            </tr>
+            <tr>
+              <td>Đơn Pending chưa xử lý</td>
+              <td>27</td><td>29</td><td>30</td><td>31</td><td>12</td>
+            </tr>
+            <tr>
+              <td>Số đơn Follow</td>
+              <td>106</td><td>140</td><td>97</td><td>86</td><td>94</td>
+            </tr>
+            <tr>
+              <td>Số đơn sai tuyến</td>
+              <td>1</td><td>4</td><td>1</td><td>5</td><td>8</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PERSON + SAI TUYẾN DETAIL ── -->
+  <div class="two-col">
+
+    <!-- Theo PIC hôm nay 23/05 -->
+    <div class="card">
+      <div class="section-title"><div class="dot"></div>Hướng xử lý theo PIC – 23/05/2026</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Hướng xử lý</th>
+            <th>Minh Luân</th>
+            <th>Thanh Duy</th>
+            <th>Minh Nguyễn</th>
+            <th>Văn Bửu</th>
+            <th>Trí Dĩ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>0. Tìm hàng</td><td>8</td><td>1</td><td>11</td><td>0</td><td>1</td></tr>
+          <tr><td>1. Có trạng thái mới</td><td>0</td><td>13</td><td>1</td><td>0</td><td>1</td></tr>
+          <tr><td>2. Dự kiến đền bù</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>3. Chờ xuất</td><td>0</td><td>9</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>4. Đã bàn giao TBS</td><td>0</td><td>2</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>5. Mail sai tuyến/hỗ trợ</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td><strong>Đơn đã xử lý</strong></td><td>1</td><td>22</td><td>0</td><td>1</td><td>1</td></tr>
+          <tr><td><strong>Đơn Pending</strong></td><td>7</td><td>23</td><td>42</td><td>0</td><td>39</td></tr>
+          <tr><td><strong>Đơn Follow</strong></td><td>55</td><td>8</td><td>37</td><td>4</td><td>31</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sai tuyến detail -->
+    <div class="card">
+      <div class="section-title"><div class="dot"></div>Hàng Sai Tuyến – 23/05/2026</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Chỉ số</th>
+            <th>Minh Nguyễn</th>
+            <th>Thanh Duy</th>
+            <th>Minh Luân</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Đơn đã gửi mail</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>Đơn còn lại cần gửi mail</td><td>56</td><td>0</td><td>0</td></tr>
+          <tr><td>Đơn Hub quá hạn phản hồi</td><td>22</td><td>7</td><td>11</td></tr>
+          <tr><td>Đơn đã có TTM</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>Số đơn Follow</td><td>3</td><td>0</td><td>1</td></tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:20px">
+        <div class="section-title" style="margin-bottom:10px"><div class="dot" style="background:var(--red)"></div>Bảng thống kê sai tuyến (W20 tổng)</div>
+        <table>
+          <thead><tr><th>Trạng thái</th><th>Số lượng</th></tr></thead>
+          <tbody>
+            <tr><td>Đơn đã gửi mail</td><td class="num-blue">37</td></tr>
+            <tr><td>Done</td><td class="num-good">25</td></tr>
+            <tr><td>Follow</td><td>6</td></tr>
+            <tr><td>Hub/SOC quá hạn phản hồi</td><td class="num-warn">6</td></tr>
+            <tr><td>Đang tranh chấp</td><td class="num-good">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MAIL + HƯỚNG XỬ LÝ TUẦN ── -->
+  <div class="two-col">
+
+    <!-- Mail + Done + Follow theo ngày -->
+    <div class="card">
+      <div class="section-title"><div class="dot"></div>Mail / Done / Follow theo ngày</div>
+      <table class="daily-table">
+        <thead>
+          <tr>
+            <th>Chỉ số</th>
+            <th>T2 18/05</th>
+            <th>T3 19/05</th>
+            <th>T4 20/05</th>
+            <th>T5 21/05</th>
+            <th>T6 22/05</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Đã gửi mail</td><td>1</td><td>4</td><td>2</td><td>5</td><td>3</td></tr>
+          <tr><td>Done</td><td>1</td><td>4</td><td>0</td><td>4</td><td>0</td></tr>
+          <tr><td>Follow</td><td>0</td><td>0</td><td>0</td><td>1</td><td>2</td></tr>
+          <tr><td>Hub/SOC quá hạn p/h</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>Đang tranh chấp</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Hướng xử lý tổng tuần -->
+    <div class="card">
+      <div class="section-title"><div class="dot"></div>Bảng tổng đơn xử lý theo hướng (W20)</div>
+      <table>
+        <thead><tr><th>Hướng xử lý</th><th>Số lượng</th></tr></thead>
+        <tbody>
+          <tr><td>Tìm hàng</td><td class="num-blue">252</td></tr>
+          <tr><td>Dự kiến đền bù</td><td>21</td></tr>
+          <tr><td>Miss scan</td><td>1</td></tr>
+          <tr><td>Mail sự vụ</td><td>77</td></tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:20px">
+        <div class="section-title" style="margin-bottom:10px"><div class="dot" style="background:var(--orange)"></div>Hàng Cache – Ngày 21/05</div>
+        <table>
+          <thead><tr><th>Chỉ số</th><th>Số lượng</th></tr></thead>
+          <tbody>
+            <tr><td>Đơn đã xử lý trong ngày</td><td class="num-blue">31</td></tr>
+            <tr><td>Đơn cần xử lý trong ngày</td><td>34</td></tr>
+            <tr><td>Đơn Pending chưa xử lý</td><td class="num-warn">5</td></tr>
+            <tr><td>Đơn Follow</td><td>32</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LOST THRESHOLD ── -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="section-title"><div class="dot" style="background:var(--red)"></div>Hàng Cache Lost – So sánh Kỳ 04 vs Kỳ 05</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Nguyên nhân</th>
+          <th>Kỳ tháng 04</th>
+          <th>Kỳ tháng 05</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Dán sai bill</td><td>11</td><td class="num-good">3</td></tr>
+        <tr><td>2. Ngoại quan giống nhau</td><td>9</td><td class="num-good">0</td></tr>
+        <tr><td>3. Thất lạc</td><td>5</td><td class="num-good">0</td></tr>
+        <tr><td>4. CCTV quá hạn</td><td>4</td><td class="num-good">0</td></tr>
+        <tr><td>5. Mất mã</td><td>3</td><td class="num-good">0</td></tr>
+        <tr><td>6. Rơi vào KV technical</td><td>2</td><td class="num-good">0</td></tr>
+        <tr><td>7. Kẹt carrier</td><td>2</td><td class="num-good">0</td></tr>
+        <tr><td>8. Đóng bao thanh lý</td><td>1</td><td class="num-good">0</td></tr>
+        <tr><td>9. Không lồn giữ bao</td><td>1</td><td>1</td></tr>
+        <tr><td>10. Sai tuyến</td><td>2</td><td class="num-good">0</td></tr>
+        <tr style="background:var(--surface2)">
+          <td><strong>Tổng đơn đã xử lý</strong></td>
+          <td class="num-blue">40</td>
+          <td class="num-blue">4</td>
+        </tr>
+        <tr style="background:var(--surface2)">
+          <td><strong>Đơn cần xử lý</strong></td>
+          <td>40</td>
+          <td>4</td>
+        </tr>
+        <tr style="background:var(--surface2)">
+          <td><strong>Đơn Pending chưa xử lý</strong></td>
+          <td class="num-good">0</td>
+          <td class="num-good">0</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer>
+  Báo cáo SW SOC – Backlog · W20/2026 · Xuất ngày 23/05/2026 · 
+  <a href="https://docs.google.com/spreadsheets/d/1Z-MsgwIHEl9cwuRe95QEM6tGjOWYW6FaE_FN23RAv1c/edit?gid=824873639#gid=824873639" 
+     target="_blank" style="color:#58a6ff;text-decoration:none">Xem Google Sheet gốc ↗</a>
+</footer>
+
+</body>
+</html>
