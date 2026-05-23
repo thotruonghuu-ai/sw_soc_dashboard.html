@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FC Operations Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0a0e1a;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: #1e2d45;
+  --accent: #00d4ff;
+  --accent2: #00ff9d;
+  --warn: #ff6b35;
+  --danger: #ff2d55;
+  --text: #e2eaf6;
+  --muted: #5a7a9a;
+  --green: #00e676;
+  --yellow: #ffd600;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+/* Header */
+.header {
+  background: linear-gradient(135deg, #0a0e1a 0%, #0d1929 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 2px;
+}
+.logo::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--accent2);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50% { opacity:.5; transform:scale(1.4); }
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+#live-clock {
+  color: var(--accent2);
+  font-size: 13px;
+}
+.last-update {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* Tabs */
+.tabs-wrapper {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+.tab-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 14px 20px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all .2s;
+  white-space: nowrap;
+  letter-spacing: .5px;
+  position: relative;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.tab-btn .tab-icon { margin-right: 7px; }
+
+/* Tab content */
+.tab-content { display: none; padding: 20px 24px; }
+.tab-content.active { display: block; }
+
+/* Date picker row */
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.date-picker-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+input[type=date] {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+}
+input[type=date]:focus { outline: none; border-color: var(--accent); }
+.btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn:hover { background: var(--accent); color: var(--bg); }
+.btn-today {
+  background: rgba(0,212,255,.08);
+  border-color: var(--accent);
+}
+
+/* KPI Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.kpi-card.blue::before { background: var(--accent); }
+.kpi-card.green::before { background: var(--accent2); }
+.kpi-card.orange::before { background: var(--warn); }
+.kpi-card.red::before { background: var(--danger); }
+.kpi-card.yellow::before { background: var(--yellow); }
+.kpi-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.kpi-value {
+  font-size: 26px;
+  font-weight: 700;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text);
+  line-height: 1;
+}
+.kpi-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* Charts grid */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media(max-width:800px) { .charts-grid { grid-template-columns: 1fr; } }
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+.chart-card.wide {
+  grid-column: 1 / -1;
+}
+.chart-title {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.chart-wrap { position: relative; height: 220px; }
+
+/* Table */
+.data-table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.data-table-title {
+  padding: 12px 16px;
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.table-scroll { overflow-x: auto; max-height: 380px; overflow-y: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+thead th {
+  background: var(--surface2);
+  padding: 10px 12px;
+  text-align: left;
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: sticky;
+  top: 0;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+tbody tr {
+  border-bottom: 1px solid rgba(30,45,69,.5);
+  transition: background .15s;
+}
+tbody tr:hover { background: rgba(255,255,255,.02); }
+tbody td {
+  padding: 9px 12px;
+  color: var(--text);
+  white-space: nowrap;
+}
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.badge-green { background: rgba(0,230,118,.15); color: var(--green); }
+.badge-red { background: rgba(255,45,85,.15); color: var(--danger); }
+.badge-yellow { background: rgba(255,214,0,.12); color: var(--yellow); }
+.badge-orange { background: rgba(255,107,53,.15); color: var(--warn); }
+.badge-blue { background: rgba(0,212,255,.1); color: var(--accent); }
+
+/* Row alerts */
+.row-alert-red { background: rgba(255,45,85,.08) !important; border-left: 3px solid var(--danger); }
+.row-alert-orange { background: rgba(255,107,53,.08) !important; border-left: 3px solid var(--warn); }
+.alert-icon { color: var(--warn); margin-right: 4px; }
+
+/* Loading skeleton */
+.loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  color: var(--muted);
+  gap: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+}
+.spinner {
+  width: 32px; height: 32px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* FC vs Actual comparison */
+.fc-vs-actual {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.progress-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .6s ease;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+}
+.progress-bar.over { background: linear-gradient(90deg, var(--warn), var(--danger)); }
+
+/* Tab 2 specific */
+.region-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+.section-title {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-family: 'IBM Plex Mono', monospace;
+  margin-bottom: 10px;
+  margin-top: 18px;
+}
+.refresh-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--accent2);
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 3px 8px;
+  background: rgba(0,255,157,.07);
+  border-radius: 3px;
+  border: 1px solid rgba(0,255,157,.2);
+}
+.no-data {
+  text-align: center;
+  padding: 30px;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">FC OPS DASHBOARD</div>
+  <div class="header-right">
+    <div id="live-clock"></div>
+    <div class="refresh-badge">⟳ AUTO <span id="next-refresh">60s</span></div>
+    <div class="last-update">Last: <span id="last-update-time">—</span></div>
+  </div>
+</div>
+
+<div class="tabs-wrapper">
+  <button class="tab-btn active" onclick="switchTab('vol')" id="tab-vol">
+    <span class="tab-icon">📦</span>Volume Arrive
+  </button>
+  <button class="tab-btn" onclick="switchTab('dep')" id="tab-dep">
+    <span class="tab-icon">🚚</span>Truck Departed
+  </button>
+  <button class="tab-btn" onclick="switchTab('backlog')" id="tab-backlog">
+    <span class="tab-icon">📋</span>Backlog
+  </button>
+  <button class="tab-btn" onclick="switchTab('pending')" id="tab-pending">
+    <span class="tab-icon">⏳</span>LH Pending
+  </button>
+</div>
+
+<!-- ===== TAB 1: VOLUME ARRIVE ===== -->
+<div class="tab-content active" id="tab-content-vol">
+  <div class="controls-row">
+    <span class="date-picker-label">XEM NGÀY:</span>
+    <input type="date" id="date-vol" />
+    <button class="btn btn-today" onclick="setTodayVol()">Hôm nay</button>
+    <button class="btn" onclick="loadVolData()">Tải lại</button>
+    <div id="vol-loading-badge" style="display:none" class="refresh-badge">⟳ Đang tải...</div>
+  </div>
+
+  <div class="kpi-grid" id="vol-kpis">
+    <div class="loading-wrap" style="grid-column:1/-1;padding:30px"><div class="spinner"></div><span>Đang tải KPI...</span></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card wide">
+      <div class="chart-title">📈 Cumulative Arrived Volume vs Forecast</div>
+      <div class="chart-wrap"><canvas id="chart-fc-vs-actual"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🚛 Xe Arrive theo giờ</div>
+      <div class="chart-wrap"><canvas id="chart-trips-hour"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📊 Năng suất & Đội xả</div>
+      <div class="chart-wrap"><canvas id="chart-productivity"></canvas></div>
+    </div>
+  </div>
+
+  <div class="data-table-wrap">
+    <div class="data-table-title">
+      <span>CHI TIẾT THEO GIỜ — LH SW HOUR</span>
+      <span id="vol-row-count" class="refresh-badge"></span>
+    </div>
+    <div class="table-scroll">
+      <table id="vol-table">
+        <thead>
+          <tr>
+            <th>Giờ</th>
+            <th>Trips</th>
+            <th>Hàng (Qty)</th>
+            <th>Cumulative Vol</th>
+            <th>Unloaded Trips</th>
+            <th>Đội Xả (Teams)</th>
+            <th>Productivity</th>
+            <th>Unload Vol</th>
+            <th>Bulky</th>
+            <th>Sorting</th>
+            <th>Pending Trips</th>
+            <th>Pending Vol</th>
+          </tr>
+        </thead>
+        <tbody id="vol-tbody">
+          <tr><td colspan="12" class="no-data">Chọn ngày và nhấn Tải lại</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: TRUCK DEPARTED ===== -->
+<div class="tab-content" id="tab-content-dep">
+  <div class="controls-row">
+    <span class="date-picker-label">NGÀY DỰ KIẾN ĐẾN:</span>
+    <input type="date" id="date-dep" />
+    <button class="btn btn-today" onclick="setTodayDep()">Hôm nay</button>
+    <button class="btn" onclick="loadDepData()">Tải lại</button>
+    <div id="dep-loading-badge" style="display:none" class="refresh-badge">⟳ Đang tải...</div>
+  </div>
+
+  <div class="section-title">PHÂN BỔ THEO KHU VỰC</div>
+  <div class="kpi-grid" id="dep-region-kpis">
+    <div class="loading-wrap" style="grid-column:1/-1;padding:30px"><div class="spinner"></div><span>Đang tải...</span></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">🗺️ Số xe theo khu vực</div>
+      <div class="chart-wrap"><canvas id="chart-dep-region"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">⏰ Xe dự kiến đến theo khung giờ</div>
+      <div class="chart-wrap"><canvas id="chart-dep-timeslot"></canvas></div>
+    </div>
+  </div>
+
+  <div class="data-table-wrap">
+    <div class="data-table-title">
+      <span>CHI TIẾT CHUYẾN XE DEPARTED</span>
+      <span id="dep-row-count" class="refresh-badge"></span>
+    </div>
+    <div class="table-scroll">
+      <table id="dep-table">
+        <thead>
+          <tr>
+            <th>Trip</th>
+            <th>Biển số</th>
+            <th>Từ kho</th>
+            <th>Đến kho</th>
+            <th>Station</th>
+            <th>Bags</th>
+            <th>Volume</th>
+            <th>Bulky</th>
+            <th>Khung giờ đến</th>
+            <th>Ngày đến (dự kiến)</th>
+          </tr>
+        </thead>
+        <tbody id="dep-tbody">
+          <tr><td colspan="10" class="no-data">Chọn ngày và nhấn Tải lại</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 3: BACKLOG ===== -->
+<div class="tab-content" id="tab-content-backlog">
+  <div class="controls-row">
+    <span class="date-picker-label">NGÀY:</span>
+    <input type="date" id="date-backlog" />
+    <button class="btn btn-today" onclick="setTodayBacklog()">Hôm nay</button>
+    <button class="btn" onclick="loadBacklogData()">Tải lại</button>
+    <div id="backlog-loading-badge" style="display:none" class="refresh-badge">⟳ Đang tải...</div>
+  </div>
+
+  <div class="kpi-grid" id="backlog-kpis">
+    <div class="loading-wrap" style="grid-column:1/-1;padding:30px"><div class="spinner"></div><span>Đang tải...</span></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card wide">
+      <div class="chart-title">📉 Backlog Overview — Pending Trips & Volume</div>
+      <div class="chart-wrap"><canvas id="chart-backlog"></canvas></div>
+    </div>
+  </div>
+
+  <div class="data-table-wrap">
+    <div class="data-table-title">
+      <span>PHÂN TÍCH BACKLOG — ARRIVED + DEPARTED</span>
+    </div>
+    <div class="table-scroll" id="backlog-detail">
+      <div class="no-data">Chọn ngày và nhấn Tải lại</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 4: LH PENDING ===== -->
+<div class="tab-content" id="tab-content-pending">
+  <div class="controls-row">
+    <button class="btn" onclick="loadPendingData()">🔄 Làm mới</button>
+    <div id="pending-loading-badge" style="display:none" class="refresh-badge">⟳ Đang tải...</div>
+    <span style="font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace">Auto refresh mỗi 60 giây</span>
+  </div>
+
+  <div class="kpi-grid" id="pending-kpis" style="grid-template-columns:repeat(4,1fr)">
+    <div class="loading-wrap" style="grid-column:1/-1;padding:30px"><div class="spinner"></div><span>Đang tải...</span></div>
+  </div>
+
+  <!-- Alert legend -->
+  <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;font-size:11px;font-family:'IBM Plex Mono',monospace;">
+    <span style="background:rgba(255,45,85,.15);color:var(--danger);padding:3px 9px;border-radius:3px">● No (cột H)</span>
+    <span style="background:rgba(0,230,118,.12);color:var(--green);padding:3px 9px;border-radius:3px">● Yes (cột H)</span>
+    <span style="background:rgba(255,107,53,.12);color:var(--warn);padding:3px 9px;border-radius:3px;border-left:3px solid var(--warn)">⚠ Chờ &gt;4h (Yes + &gt;4h)</span>
+    <span style="background:rgba(255,107,53,.12);color:orange;padding:3px 9px;border-radius:3px;border-left:3px solid orange">⚠ WH + chờ &gt;30min</span>
+  </div>
+
+  <div class="data-table-wrap">
+    <div class="data-table-title">
+      <span>LH PENDING — LIVE DATA</span>
+      <span id="pending-row-count" class="refresh-badge"></span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>A — Trip ID</th>
+            <th>B — Thông tin</th>
+            <th>C — Thời gian</th>
+            <th>D</th>
+            <th>E</th>
+            <th>H — Nhận</th>
+            <th>I — Loại</th>
+          </tr>
+        </thead>
+        <tbody id="pending-tbody">
+          <tr><td colspan="7" class="no-data">Nhấn Làm mới để tải dữ liệu</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG — Thay SHEET_ID và GID khi cần
+// ============================================================
+const SHEETS = {
+  lhSwHour: {
+    id: '1QjhjmVrsb0VKZLp8wpv7zbcM-CcUS76hrKx1KYWMrAQ',
+    gid: '1353108105'
+  },
+  departed: {
+    id: '1QjhjmVrsb0VKZLp8wpv7zbcM-CcUS76hrKx1KYWMrAQ',
+    gid: '1382822053'
+  },
+  lhPending: {
+    id: '1QjhjmVrsb0VKZLp8wpv7zbcM-CcUS76hrKx1KYWMrAQ',
+    gid: '839081117'
+  },
+  forecast: {
+    id: '1-zLNMjTGAFrDcvCLIwwYf100n5dc4DW7HLBDOqFLIeo',
+    gid: '0'
+  }
+};
+
+function csvUrl(sheet) {
+  return `https://docs.google.com/spreadsheets/d/${sheet.id}/export?format=csv&gid=${sheet.gid}`;
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  return lines.map(line => {
+    const result = [];
+    let inQuote = false, cell = '';
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQuote = !inQuote; continue; }
+      if (ch === ',' && !inQuote) { result.push(cell.trim()); cell = ''; continue; }
+      cell += ch;
+    }
+    result.push(cell.trim());
+    return result;
+  });
+}
+
+async function fetchCSV(sheet) {
+  const url = csvUrl(sheet);
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const text = await r.text();
+    return parseCSV(text);
+  } catch(e) {
+    console.error('fetchCSV error:', e);
+    return null;
+  }
+}
+
+function todayStr() {
+  const d = new Date();
+  return d.toISOString().split('T')[0];
+}
+
+function fmt(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return Number(n).toLocaleString('vi-VN');
+}
+
+function parseNum(s) {
+  if (!s) return 0;
+  const n = parseFloat(s.replace(/,/g, ''));
+  return isNaN(n) ? 0 : n;
+}
+
+function hoursAgo(dateStr) {
+  if (!dateStr) return 9999;
+  const d = new Date(dateStr.replace(' ', 'T'));
+  if (isNaN(d)) return 9999;
+  return (Date.now() - d.getTime()) / 3600000;
+}
+
+function minutesAgo(dateStr) {
+  if (!dateStr) return 9999;
+  const d = new Date(dateStr.replace(' ', 'T'));
+  if (isNaN(d)) return 9999;
+  return (Date.now() - d.getTime()) / 60000;
+}
+
+let chartInstances = {};
+function renderChart(id, config) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  if (chartInstances[id]) { chartInstances[id].destroy(); }
+  chartInstances[id] = new Chart(canvas.getContext('2d'), config);
+}
+
+// ============================================================
+// CLOCK + AUTO REFRESH
+// ============================================================
+let autoRefreshCount = 60;
+let autoRefreshInterval;
+
+function startClock() {
+  setInterval(() => {
+    const now = new Date();
+    document.getElementById('live-clock').textContent =
+      now.toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }, 1000);
+}
+
+function startAutoRefresh() {
+  autoRefreshCount = 60;
+  clearInterval(autoRefreshInterval);
+  autoRefreshInterval = setInterval(() => {
+    autoRefreshCount--;
+    const el = document.getElementById('next-refresh');
+    if (el) el.textContent = autoRefreshCount + 's';
+    if (autoRefreshCount <= 0) {
+      autoRefreshCount = 60;
+      refreshActiveTab();
+    }
+  }, 1000);
+}
+
+function refreshActiveTab() {
+  const active = document.querySelector('.tab-content.active');
+  if (!active) return;
+  if (active.id === 'tab-content-vol') loadVolData();
+  else if (active.id === 'tab-content-dep') loadDepData();
+  else if (active.id === 'tab-content-backlog') loadBacklogData();
+  else if (active.id === 'tab-content-pending') loadPendingData();
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-content-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  startAutoRefresh();
+}
+
+// ============================================================
+// TAB 1 — VOLUME ARRIVE
+// ============================================================
+function setTodayVol() {
+  document.getElementById('date-vol').value = todayStr();
+  loadVolData();
+}
+
+async function loadVolData() {
+  const badge = document.getElementById('vol-loading-badge');
+  badge.style.display = 'flex';
+
+  const [rows, fcRows] = await Promise.all([
+    fetchCSV(SHEETS.lhSwHour),
+    fetchCSV(SHEETS.forecast)
+  ]);
+
+  badge.style.display = 'none';
+  if (!rows) { showError('vol-tbody', 12, 'Không tải được dữ liệu. Sheet có thể chưa công khai.'); return; }
+
+  const selDate = document.getElementById('date-vol').value || todayStr();
+
+  // filter by date (col A = index 0)
+  const header = rows[0];
+  const data = rows.slice(1).filter(r => r[0] && r[0].startsWith(selDate));
+
+  // Forecast: col H (index 7) in forecast sheet, find row matching date
+  let fcValue = null;
+  if (fcRows) {
+    const fcData = fcRows.slice(1);
+    const fcRow = fcData.find(r => r[0] && r[0].startsWith(selDate));
+    if (fcRow) fcValue = parseNum(fcRow[7]);
+    // If not found by date, try to find a row that contains today's forecast
+    if (!fcValue) {
+      // Take last non-empty value in col H as today's FC
+      for (let i = fcData.length - 1; i >= 0; i--) {
+        if (fcData[i][7]) { fcValue = parseNum(fcData[i][7]); break; }
+      }
+    }
+  }
+
+  if (data.length === 0) {
+    document.getElementById('vol-kpis').innerHTML = `<div class="no-data" style="grid-column:1/-1">Không có dữ liệu cho ngày ${selDate}</div>`;
+    document.getElementById('vol-tbody').innerHTML = `<tr><td colspan="12" class="no-data">Không có dữ liệu</td></tr>`;
+    return;
+  }
+
+  // Compute KPIs from latest row
+  const latest = data[data.length - 1];
+  const totalTrips = data.reduce((s, r) => s + parseNum(r[2]), 0);
+  const cumVol = parseNum(latest[8]); // col I
+  const unloadedTrips = parseNum(latest[10]); // col K
+  const teams = parseNum(latest[11]); // col L
+  const productivity = parseNum(latest[13]); // col N
+  const pendingTrips = parseNum(latest[21]); // col V
+  const pendingVol = parseNum(latest[24]); // col Y
+  const unloadVol = parseNum(latest[16]); // col Q
+  const bulkyVol = parseNum(latest[17]); // col R
+  const sortingVol = parseNum(latest[18]); // col S
+
+  const pctFC = fcValue ? Math.round(cumVol / fcValue * 100) : null;
+  const pctColor = !pctFC ? 'blue' : pctFC >= 100 ? 'green' : pctFC >= 80 ? 'yellow' : 'orange';
+
+  document.getElementById('vol-kpis').innerHTML = `
+    <div class="kpi-card blue">
+      <div class="kpi-label">Total Trips</div>
+      <div class="kpi-value">${fmt(totalTrips)}</div>
+      <div class="kpi-sub">Arrived hôm nay</div>
+    </div>
+    <div class="kpi-card ${pctColor}">
+      <div class="kpi-label">Cum. Vol vs FC</div>
+      <div class="kpi-value">${pctFC !== null ? pctFC + '%' : '—'}</div>
+      <div class="kpi-sub">${fmt(cumVol)} / ${fmt(fcValue)}</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Unloaded Trips</div>
+      <div class="kpi-value">${fmt(unloadedTrips)}</div>
+      <div class="kpi-sub"></div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Đội xả (Teams)</div>
+      <div class="kpi-value">${fmt(teams)}</div>
+      <div class="kpi-sub"></div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Productivity</div>
+      <div class="kpi-value">${fmt(productivity)}</div>
+      <div class="kpi-sub">Kiện/h</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Pending Trips</div>
+      <div class="kpi-value">${fmt(pendingTrips)}</div>
+      <div class="kpi-sub"></div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Pending Volume</div>
+      <div class="kpi-value">${fmt(pendingVol)}</div>
+      <div class="kpi-sub">Chưa nhận</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Unload Vol</div>
+      <div class="kpi-value">${fmt(unloadVol)}</div>
+      <div class="kpi-sub">Bulky: ${fmt(bulkyVol)}</div>
+    </div>
+  `;
+
+  // Charts
+  const labels = data.map(r => {
+    const ts = r[1] || r[0];
+    const parts = ts.split(' ');
+    return parts[1] ? parts[1].substring(0,5) : ts.substring(11,16);
+  });
+  const cumVols = data.map(r => parseNum(r[8]));
+  const tripsArr = data.map(r => parseNum(r[2]));
+  const prodArr = data.map(r => parseNum(r[13]));
+  const teamsArr = data.map(r => parseNum(r[11]));
+
+  // FC horizontal line
+  const fcLine = data.map(() => fcValue);
+
+  renderChart('chart-fc-vs-actual', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Cumulative Arrived Vol',
+          data: cumVols,
+          borderColor: '#00d4ff',
+          backgroundColor: 'rgba(0,212,255,.1)',
+          fill: true,
+          tension: .4,
+          pointRadius: 3
+        },
+        {
+          label: `Forecast (${fmt(fcValue)})`,
+          data: fcLine,
+          borderColor: '#ffd600',
+          borderDash: [6,4],
+          pointRadius: 0,
+          borderWidth: 2
+        }
+      ]
+    },
+    options: chartOpts('Kiện')
+  });
+
+  renderChart('chart-trips-hour', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Trips',
+        data: tripsArr,
+        backgroundColor: 'rgba(0,212,255,.5)',
+        borderColor: '#00d4ff',
+        borderWidth: 1,
+        borderRadius: 2
+      }]
+    },
+    options: chartOpts('Trips')
+  });
+
+  renderChart('chart-productivity', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Productivity',
+          data: prodArr,
+          borderColor: '#00ff9d',
+          tension: .4,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Teams',
+          data: teamsArr,
+          borderColor: '#ffd600',
+          tension: .4,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      ...chartOpts(''),
+      scales: {
+        x: xScale(),
+        y: { ...yScale('Productivity'), position: 'left' },
+        y1: { ...yScale('Teams'), position: 'right', grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+
+  // Table
+  document.getElementById('vol-row-count').textContent = data.length + ' rows';
+  const tbody = document.getElementById('vol-tbody');
+  tbody.innerHTML = data.map(r => {
+    const ts = r[1] || r[0];
+    const hr = ts.includes(' ') ? ts.split(' ')[1].substring(0,5) : ts.substring(11,16);
+    return `<tr>
+      <td>${hr}</td>
+      <td>${fmt(parseNum(r[2]))}</td>
+      <td>${fmt(parseNum(r[7]))}</td>
+      <td><strong style="color:var(--accent)">${fmt(parseNum(r[8]))}</strong></td>
+      <td>${fmt(parseNum(r[10]))}</td>
+      <td>${fmt(parseNum(r[11]))}</td>
+      <td>${fmt(parseNum(r[13]))}</td>
+      <td>${fmt(parseNum(r[16]))}</td>
+      <td>${fmt(parseNum(r[17]))}</td>
+      <td>${fmt(parseNum(r[18]))}</td>
+      <td><span class="badge ${parseNum(r[21]) > 0 ? 'badge-orange' : 'badge-green'}">${fmt(parseNum(r[21]))}</span></td>
+      <td>${fmt(parseNum(r[24]))}</td>
+    </tr>`;
+  }).join('');
+
+  updateLastRefresh();
+}
+
+// ============================================================
+// TAB 2 — TRUCK DEPARTED
+// ============================================================
+const REGIONS = {
+  'HN': ['HAN','HN','HÀ NỘI','HANOI'],
+  'BN': ['BẮC NINH','BN','BACNINH','BAC NINH'],
+  'HCM': ['HCM','HỒ CHÍ MINH','HOCHIMINH','TP.HCM'],
+  'FLM': ['FLM','FULFILLMENT'],
+  'Seller To SOC': ['SELLER','SOC']
+};
+
+function classifyRegion(stationName) {
+  if (!stationName) return 'Other';
+  const s = stationName.toUpperCase();
+  for (const [key, kws] of Object.entries(REGIONS)) {
+    if (kws.some(k => s.includes(k))) return key;
+  }
+  return 'Other';
+}
+
+function setTodayDep() {
+  document.getElementById('date-dep').value = todayStr();
+  loadDepData();
+}
+
+async function loadDepData() {
+  const badge = document.getElementById('dep-loading-badge');
+  badge.style.display = 'flex';
+  const rows = await fetchCSV(SHEETS.departed);
+  badge.style.display = 'none';
+  if (!rows) { showError('dep-tbody', 10, 'Không tải được dữ liệu.'); return; }
+
+  const selDate = document.getElementById('date-dep').value || todayStr();
+  const data = rows.slice(1).filter(r => r[16] && r[16].startsWith(selDate)); // col Q (idx 16)
+
+  if (data.length === 0) {
+    document.getElementById('dep-region-kpis').innerHTML = `<div class="no-data" style="grid-column:1/-1">Không có dữ liệu cho ngày ${selDate}</div>`;
+    document.getElementById('dep-tbody').innerHTML = `<tr><td colspan="10" class="no-data">Không có dữ liệu</td></tr>`;
+    return;
+  }
+
+  // Count by region
+  const regionCount = { HN:0, BN:0, HCM:0, FLM:0, 'Seller To SOC':0, Other:0 };
+  const regionVol = { HN:0, BN:0, HCM:0, FLM:0, 'Seller To SOC':0, Other:0 };
+  data.forEach(r => {
+    const reg = classifyRegion(r[17] || r[4]); // col R (idx 17) or col E (idx 4)
+    regionCount[reg]++;
+    regionVol[reg] += parseNum(r[12]); // col M (idx 12)
+  });
+
+  // Timeslot analysis: col P (idx 15)
+  const timeslots = {};
+  data.forEach(r => {
+    const slot = r[15] || 'Unknown';
+    if (!timeslots[slot]) timeslots[slot] = { trips:0, vol:0, bags:0, bulky:0 };
+    timeslots[slot].trips++;
+    timeslots[slot].vol += parseNum(r[12]);
+    timeslots[slot].bags += parseNum(r[11]);
+    timeslots[slot].bulky += parseNum(r[13]);
+  });
+
+  const colors = { HN:'#00d4ff', BN:'#00ff9d', HCM:'#ffd600', FLM:'#ff6b35', 'Seller To SOC':'#c084fc', Other:'#5a7a9a' };
+
+  // KPI cards by region
+  document.getElementById('dep-region-kpis').innerHTML = Object.entries(regionCount).map(([r, cnt]) => `
+    <div class="kpi-card" style="border-top: 2px solid ${colors[r]||'#5a7a9a'}">
+      <div class="kpi-label">${r}</div>
+      <div class="kpi-value" style="color:${colors[r]||'var(--muted)'}">${cnt}</div>
+      <div class="kpi-sub">Vol: ${fmt(regionVol[r])}</div>
+    </div>
+  `).join('');
+
+  const slotLabels = Object.keys(timeslots).sort();
+  const slotTrips = slotLabels.map(s => timeslots[s].trips);
+
+  renderChart('chart-dep-region', {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(regionCount),
+      datasets: [{ data: Object.values(regionCount), backgroundColor: Object.keys(regionCount).map(k => colors[k]||'#5a7a9a'), borderWidth: 0 }]
+    },
+    options: {
+      plugins: { legend: { labels: { color: '#e2eaf6', font: { size: 11 } } } },
+      cutout: '60%'
+    }
+  });
+
+  renderChart('chart-dep-timeslot', {
+    type: 'bar',
+    data: {
+      labels: slotLabels,
+      datasets: [{ label: 'Trips', data: slotTrips, backgroundColor: 'rgba(255,107,53,.6)', borderColor: '#ff6b35', borderWidth: 1, borderRadius: 3 }]
+    },
+    options: chartOpts('Trips')
+  });
+
+  document.getElementById('dep-row-count').textContent = data.length + ' chuyến';
+  document.getElementById('dep-tbody').innerHTML = data.map(r => `<tr>
+    <td><span class="badge badge-blue">${r[0]}</span></td>
+    <td>${r[2]||'—'}</td>
+    <td>${r[4]||'—'}</td>
+    <td>${r[5]||'—'}</td>
+    <td>${r[17]||'—'}</td>
+    <td>${fmt(parseNum(r[11]))}</td>
+    <td>${fmt(parseNum(r[12]))}</td>
+    <td>${fmt(parseNum(r[13]))}</td>
+    <td><span class="badge badge-yellow">${r[15]||'—'}</span></td>
+    <td>${r[16]||'—'}</td>
+  </tr>`).join('');
+
+  updateLastRefresh();
+}
+
+// ============================================================
+// TAB 3 — BACKLOG
+// ============================================================
+function setTodayBacklog() {
+  document.getElementById('date-backlog').value = todayStr();
+  loadBacklogData();
+}
+
+async function loadBacklogData() {
+  const badge = document.getElementById('backlog-loading-badge');
+  badge.style.display = 'flex';
+
+  const [swRows, depRows] = await Promise.all([
+    fetchCSV(SHEETS.lhSwHour),
+    fetchCSV(SHEETS.departed)
+  ]);
+
+  badge.style.display = 'none';
+  const selDate = document.getElementById('date-backlog').value || todayStr();
+
+  // From LH SW Hour: get latest row for today
+  let pendingTrips = 0, pendingVol = 0, pendingPayload = 0, cumulativeVol = 0;
+  if (swRows) {
+    const swData = swRows.slice(1).filter(r => r[0] && r[0].startsWith(selDate));
+    if (swData.length > 0) {
+      const latest = swData[swData.length - 1];
+      pendingTrips = parseNum(latest[21]); // col V
+      pendingVol = parseNum(latest[24]);   // col Y
+      pendingPayload = parseNum(latest[23]); // col X
+      cumulativeVol = parseNum(latest[8]);
+    }
+  }
+
+  // From Departed: count trips & volume for today
+  let depTrips = 0, depVol = 0;
+  if (depRows) {
+    const depData = depRows.slice(1).filter(r => r[16] && r[16].startsWith(selDate));
+    depTrips = depData.length;
+    depVol = depData.reduce((s, r) => s + parseNum(r[12]), 0);
+  }
+
+  // Total backlog still to process
+  const totalRemaining = pendingTrips + depTrips;
+  const totalVol = pendingVol + depVol;
+  // Estimated teams needed (assume 2.5k vol/team/hr from whiteboard)
+  const teamsNeeded = totalVol > 0 ? Math.ceil(totalVol / 2500) : 0;
+
+  document.getElementById('backlog-kpis').innerHTML = `
+    <div class="kpi-card orange">
+      <div class="kpi-label">Pending Trips (Arrived)</div>
+      <div class="kpi-value">${fmt(pendingTrips)}</div>
+      <div class="kpi-sub">Chưa nhận</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Xe đang Departed</div>
+      <div class="kpi-value">${fmt(depTrips)}</div>
+      <div class="kpi-sub">Dự kiến đến hôm nay</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Tổng xe cần xả</div>
+      <div class="kpi-value">${fmt(totalRemaining)}</div>
+      <div class="kpi-sub">Pending + Departed</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Total Volume backlog</div>
+      <div class="kpi-value">${fmt(totalVol)}</div>
+      <div class="kpi-sub">Kiện cần xử lý</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Đội cần thiết (est.)</div>
+      <div class="kpi-value">${teamsNeeded}</div>
+      <div class="kpi-sub">~2,500 kiện/đội/giờ</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Pending Volume</div>
+      <div class="kpi-value">${fmt(pendingVol)}</div>
+      <div class="kpi-sub">Payload: ${fmt(pendingPayload)}</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Departed Volume</div>
+      <div class="kpi-value">${fmt(depVol)}</div>
+      <div class="kpi-sub"></div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Cumulative Arrived Vol</div>
+      <div class="kpi-value">${fmt(cumulativeVol)}</div>
+      <div class="kpi-sub"></div>
+    </div>
+  `;
+
+  renderChart('chart-backlog', {
+    type: 'bar',
+    data: {
+      labels: ['Pending (Arrived)', 'Departed (Dự kiến đến)', 'Total Backlog'],
+      datasets: [
+        {
+          label: 'Trips',
+          data: [pendingTrips, depTrips, totalRemaining],
+          backgroundColor: ['rgba(255,107,53,.6)','rgba(0,212,255,.5)','rgba(255,45,85,.6)'],
+          borderColor: ['#ff6b35','#00d4ff','#ff2d55'],
+          borderWidth: 1,
+          borderRadius: 4,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Volume',
+          data: [pendingVol, depVol, totalVol],
+          type: 'line',
+          borderColor: '#ffd600',
+          backgroundColor: 'rgba(255,214,0,.08)',
+          fill: true,
+          tension: .4,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      ...chartOpts(''),
+      scales: {
+        x: xScale(),
+        y: { ...yScale('Trips'), position: 'left' },
+        y1: { ...yScale('Volume'), position: 'right', grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+
+  document.getElementById('backlog-detail').innerHTML = `
+    <div style="padding:16px;">
+      <table style="width:100%">
+        <thead>
+          <tr>
+            <th>Nguồn</th>
+            <th>Trips</th>
+            <th>Volume</th>
+            <th>Ghi chú</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-orange">Arrived Pending</span></td>
+            <td>${fmt(pendingTrips)}</td>
+            <td>${fmt(pendingVol)}</td>
+            <td>Xe đã đến kho nhưng chưa nhận hàng</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-blue">Departed (đến hôm nay)</span></td>
+            <td>${fmt(depTrips)}</td>
+            <td>${fmt(depVol)}</td>
+            <td>Xe đang trên đường, dự kiến đến ngày ${selDate}</td>
+          </tr>
+          <tr style="background:rgba(255,45,85,.05);font-weight:600">
+            <td><span class="badge badge-red">TỔNG BACKLOG</span></td>
+            <td>${fmt(totalRemaining)}</td>
+            <td>${fmt(totalVol)}</td>
+            <td>Cần <strong style="color:var(--accent2)">${teamsNeeded} đội</strong> để xử lý</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  updateLastRefresh();
+}
+
+// ============================================================
+// TAB 4 — LH PENDING
+// ============================================================
+async function loadPendingData() {
+  const badge = document.getElementById('pending-loading-badge');
+  badge.style.display = 'flex';
+  const rows = await fetchCSV(SHEETS.lhPending);
+  badge.style.display = 'none';
+  if (!rows) { document.getElementById('pending-tbody').innerHTML = `<tr><td colspan="7" class="no-data">Không tải được dữ liệu. Sheet cần được chia sẻ công khai.</td></tr>`; return; }
+
+  const data = rows.slice(1).filter(r => r[0]);
+
+  let totalYes = 0, totalNo = 0, alertOver4h = 0, alertWH = 0;
+
+  document.getElementById('pending-tbody').innerHTML = data.map(r => {
+    const colA = r[0]||'', colB = r[1]||'', colC = r[2]||'',
+          colD = r[3]||'', colE = r[4]||'', colH = r[7]||'', colI = r[8]||'';
+
+    const isYes = colH.trim().toUpperCase() === 'YES';
+    const isNo  = colH.trim().toUpperCase() === 'NO';
+    const hrs = hoursAgo(colC);
+    const mins = minutesAgo(colC);
+    const isWH = colI.toUpperCase().includes('WH');
+
+    if (isYes) totalYes++;
+    if (isNo) totalNo++;
+
+    let rowClass = '';
+    let icon = '';
+    if (isYes && hrs > 4) { rowClass = 'row-alert-orange'; alertOver4h++; icon = '⚠'; }
+    else if (isWH && mins > 30) { rowClass = 'row-alert-orange'; alertWH++; icon = '🔺'; }
+
+    const hBadge = isYes
+      ? `<span class="badge badge-green">YES</span>`
+      : isNo
+        ? `<span class="badge badge-red">NO</span>`
+        : `<span class="badge">${colH}</span>`;
+
+    const iBadge = isWH
+      ? `<strong style="color:var(--warn)">${colI}</strong>`
+      : colI;
+
+    const timeDisplay = colC
+      ? `${colC} <span style="font-size:10px;color:var(--muted)">(${hrs > 1 ? Math.round(hrs) + 'h' : Math.round(mins) + 'm'})</span>`
+      : '—';
+
+    return `<tr class="${rowClass}">
+      <td>${icon ? `<span class="alert-icon">${icon}</span>` : ''}${colA}</td>
+      <td>${colB}</td>
+      <td>${timeDisplay}</td>
+      <td>${colD}</td>
+      <td>${colE}</td>
+      <td>${hBadge}</td>
+      <td>${iBadge}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('pending-row-count').textContent = data.length + ' rows';
+  document.getElementById('pending-kpis').innerHTML = `
+    <div class="kpi-card green">
+      <div class="kpi-label">YES (Đã nhận)</div>
+      <div class="kpi-value">${totalYes}</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">NO (Chưa nhận)</div>
+      <div class="kpi-value">${totalNo}</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Cảnh báo &gt;4h</div>
+      <div class="kpi-value">${alertOver4h}</div>
+      <div class="kpi-sub">Yes + chờ &gt;4 tiếng</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">WH &gt;30min</div>
+      <div class="kpi-value">${alertWH}</div>
+      <div class="kpi-sub">Kho chờ quá 30 phút</div>
+    </div>
+  `;
+
+  updateLastRefresh();
+}
+
+// ============================================================
+// CHART OPTIONS
+// ============================================================
+function xScale() {
+  return {
+    ticks: { color: '#5a7a9a', font: { size: 10 }, maxRotation: 45 },
+    grid: { color: 'rgba(30,45,69,.5)' }
+  };
+}
+function yScale(label) {
+  return {
+    ticks: { color: '#5a7a9a', font: { size: 10 } },
+    grid: { color: 'rgba(30,45,69,.5)' },
+    title: { display: !!label, text: label, color: '#5a7a9a', font: { size: 10 } }
+  };
+}
+function chartOpts(yLabel) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 500 },
+    plugins: {
+      legend: { labels: { color: '#e2eaf6', font: { size: 11, family: "'IBM Plex Mono'" }, boxWidth: 12 } }
+    },
+    scales: {
+      x: xScale(),
+      y: yScale(yLabel)
+    }
+  };
+}
+
+function showError(tbodyId, colspan, msg) {
+  const el = document.getElementById(tbodyId);
+  if (el) el.innerHTML = `<tr><td colspan="${colspan}" class="no-data" style="color:var(--warn)">${msg}</td></tr>`;
+}
+
+function updateLastRefresh() {
+  const now = new Date();
+  const el = document.getElementById('last-update-time');
+  if (el) el.textContent = now.toLocaleTimeString('vi-VN');
+  autoRefreshCount = 60;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  startClock();
+  startAutoRefresh();
+
+  // Set default dates
+  const today = todayStr();
+  ['vol','dep','backlog'].forEach(id => {
+    const el = document.getElementById('date-' + id);
+    if (el) el.value = today;
+  });
+
+  // Initial load
+  loadVolData();
+});
+</script>
+</body>
+</html>
